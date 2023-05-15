@@ -21,5 +21,8 @@
     <ClCompile Include="다중상속업캐스팅문제실습소스.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="9장객체세트구현과제_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
