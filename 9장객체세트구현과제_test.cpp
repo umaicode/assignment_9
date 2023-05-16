@@ -1,6 +1,9 @@
 /*
 * 객체들의 Set을 포함하는 테이블의 배열을 갖는 클래스 구현하기
 */
+// Person 클래스는 추상클래스로 구현하여야 한다.
+// 컨테이너 클래스를 사용해서 테이블을 만드는 것!
+// main에서 거꾸로 찾아가면서 만들어 나가는 것이 객체지향 프로그래밍 구현하는데 수월해짐. (뉴비 버전)
 #include <iostream>
 #include <string>
 #define DefaultSize 50
@@ -14,8 +17,8 @@ public:
 	string pname;
 	Person() {}
 	Person(string pid, string pname) : pid(pid), pname(pname) { }
-	virtual void Print() = 0;
-	virtual bool Equals(Employee*) = 0;
+	virtual void Print() = 0; // pure virtual로 구현
+	virtual bool Equals(Employee*) = 0; // pure virtual로 구현
 	virtual ~Person() {}
 
 };
@@ -65,7 +68,18 @@ public:
 	virtual void Print();
 
 protected:
-	Bag(int bagSize);
+	Bag(int bagSize); // bag 생성자를 protected로함 -> main에서 호출할 수 없게.
+
+	// ----------------------- 교수님 코드 -------------------------------
+	Bag(int bagSize) {
+		arr = new Employee * [bagSize];
+		// main에서 객체를 만들었는데 여기서 for loop를 돌려서 객체를 또 만들면 runtime-error 발생. 빈 객체 만들어서 넣어버리면 Add 작동안한다.
+		//for () {
+		//	arr[i] = new Employee(); 
+		//}
+	}
+	// ----------------------- 교수님 코드 -------------------------------
+
 	void Full(); // bag이 포화상태일 때의 조치
 	void Empty(); // bag이 공백 상태일 때의 조치
 
@@ -85,8 +99,8 @@ protected:
 
 class Set : public Bag {
 public:
-	Set(int setSize) :Bag(setSize) {}
-	int Add(Employee*);
+	Set(int setSize) :Bag(setSize) {} // Set의 생성자만 main에서 호출할 수 있게 public 선언.
+	int Add(Employee*); // Bag의 Add()를 virtual로 지정 ->
 	int Delete(char*);
 	void Print();
 	Employee* Search(char*);
@@ -105,16 +119,22 @@ public:
 	int Add(Employee* p);
 };
 
+int RecordSet::Add(Employee* p) {
+	if () {
+		Set::Add(p);
+	}
+}
+
 
 class RecordTable {
 	int tableMaxSize;
 	int topRecordTable;
-	RecordSet** data;
+	RecordSet** data; // 첫번째 포인터는 배열을 가리키고 두번째 포인터는 recordSet을 가리키게 된다.
 	int capacity;
 public:
 	RecordTable(int numberSet, int numberRecords) :tableMaxSize(numberSet), capacity(numberRecords) {
-		topRecordTable = 0;
-		data = new RecordSet * [numberSet];//10개의 set
+		topRecordTable = 0; // 첫번째 줄
+		data = new RecordSet * [numberSet]; //10개의 set
 		for (int i = 0; i < numberSet; i++) {
 			data[i] = new RecordSet(numberRecords);//각 set는 5개 records
 		}
@@ -125,10 +145,18 @@ public:
 	void Print();
 };
 
+// ----------------------- 교수님 코드 -------------------------------
+int RecordTable::Add(Employee* e) {
+	// 0 을 i로 바꾸고 i는 top을 통해 움직이게 만들기.
+	for () {
+		data[i]->Add(e);
+	}
+}
+// ----------------------- 교수님 코드 -------------------------------
 
 int main() {
 	Employee* members[30];//Employee 선언으로 변경하는 문제 해결 필요 
-	RecordTable table(10, 5);//10개의 record sets, 각 set은 5개의 records
+	RecordTable table(10, 5);//10개의 record sets, 각 set은 5개의 records, 10 => Set개수, 5 => 1개의 Set에 포함된 Records
 	int select;
 	Employee* p;
 	int result;
