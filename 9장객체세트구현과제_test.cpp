@@ -8,20 +8,29 @@
 #include <string>
 #define DefaultSize 50
 using namespace std;
+
 class Employee;
 class Person { //추상 클래스로 구현한다
-public:
-	string GetName() { return pname; }
-	void SetName(char* str) { pname = str; }
+protected:
 	string pid;
 	string pname;
+public:
+	string GetName() { return pname; }
+	void SetName(char* str) { pname = str; } // 수정 필요 // 아예삭제되는 것이 아니라 *******로 출력되게끔 수정 필요
+
+
+
 	Person() {}
 	Person(string pid, string pname) : pid(pid), pname(pname) { }
 	virtual void Print() = 0; // pure virtual로 구현
-	virtual bool Equals(Employee*) = 0; // pure virtual로 구현
+	virtual bool Equals(Employee*) = 0; // pure virtual로 구현 // 수정 필요.
 	virtual ~Person() {}
 
 };
+
+void Person::Print() {
+	cout << pid << ", " << pname << ", ";
+}
 
 class Employee : public Person {
 private:
@@ -34,6 +43,15 @@ public:
 	virtual bool Equals(Employee* p);
 };
 
+void Employee::Print() {
+	Person::Print();
+	cout << eno << ", " << role;
+}
+
+bool Employee::Equals(Employee* p) {
+	return pid == p->pid && pname == p->pname && eno == p->eno && role == p->role;
+}
+
 class Coder : public Employee {
 private:
 	string language;
@@ -42,6 +60,11 @@ public:
 	Coder(string pid, string pname, string eno, string role, string language) : Employee(pid, pname, eno, role), language(language) {}
 	void Print();
 };
+
+void Coder::Print() {
+	Employee::Print();
+	cout << ", " << language;
+}
 
 
 class Student : public Employee {
@@ -53,7 +76,10 @@ public:
 	void Print();
 };
 
-
+void Student::Print() {
+	Employee::Print();
+	cout << ", " << sid << ", " << major;
+}
 
 class Bag {
 public:
@@ -68,11 +94,16 @@ public:
 	virtual void Print();
 
 protected:
-	Bag(int bagSize); // bag 생성자를 protected로함 -> main에서 호출할 수 없게.
+	// Bag(int bagSize); // bag 생성자를 protected로함 -> main에서 호출할 수 없게.
 
 	// ----------------------- 교수님 코드 -------------------------------
 	Bag(int bagSize) {
 		arr = new Employee * [bagSize];
+		bagMaxSize = bagSize;
+		topBag = 0;
+		for (int i = 0; i < bagSize; i++) {
+			arr[i] = nullptr;
+		}
 		// main에서 객체를 만들었는데 여기서 for loop를 돌려서 객체를 또 만들면 runtime-error 발생. 빈 객체 만들어서 넣어버리면 Add 작동안한다.
 		//for () {
 		//	arr[i] = new Employee(); 
@@ -96,6 +127,80 @@ protected:
 	// */
 };
 
+Employee* Bag::Search(char* str) {
+	for (int i = 0; i < topBag; i++) {
+		if (strcmp(arr[i]->GetName().c_str(), str) == 0) {
+			return arr[i];
+		}
+	}
+	return nullptr;
+}
+
+void Bag::Print() {
+	Employee* p;
+	for (int i = 0; i < topBag; i++) {
+		p = arr[i];
+		p->Print();
+		cout << " | ";
+	}
+}
+
+int Bag::Add(Employee* p) {
+	if (IsFull()) {
+		Full();
+		return -1;
+	}
+
+	if (topBag < bagMaxSize) {
+		arr[topBag++] = p;
+		return 1;
+	}
+
+	return -1;
+}
+
+int Bag::Delete(char* str) {
+	if (IsEmpty()) {
+		Empty();
+		return -1;
+	}
+
+	for (int i = 0; i < topBag; i++) {
+		if (strcmp(arr[i]->GetName().c_str(), str) == 0) {
+			arr[i]->SetName("*******");
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+
+bool Bag::IsFull() {
+	if (topBag == bagMaxSize) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool Bag::IsEmpty() {
+	if (topBag == 0) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void Bag::Full() {
+	cout << "Data Structure is FULL!!!" << endl;
+}
+
+void Bag::Empty() {
+	cout << "Data Structure is EMPTY!!!" << endl;
+}
 
 class Set : public Bag {
 public:
@@ -106,6 +211,42 @@ public:
 	Employee* Search(char*);
 };
 
+int Set::Add(Employee* p) {
+	if (IsFull()) {
+		Full();
+		return -1;
+	}
+	else {
+		for (int i = 0; i < topBag; i++) {
+			if ((*(arr[i])).Equals(p)) {
+				cout << "중복된 값입니다." << endl;
+				return -1;
+			}
+		}
+		Bag::Add(p);
+		return 0;
+	}
+}
+
+int Set::Delete(char* str) {
+	return Bag::Delete(str);
+}
+
+void Set::Print() {
+	for (int i = 0; i < topBag; i++) {
+		arr[i]->Print();
+		if (i < topBag - 1) {
+			cout << " | ";
+		}
+	}
+	if (topBag > 0 && topBag % 5 != 0) {
+		cout << " | ";
+	}
+}
+
+Employee* Set::Search(char* str) {
+	return Bag::Search(str);
+}
 
 class RecordSet : public Set {
 	int setMaxSize;//5개의 레코드 수
@@ -119,12 +260,43 @@ public:
 	int Add(Employee* p);
 };
 
+// 5개 이상이면 top을 증가시켜서 다음 행으로 보내야 한다.
+// 첫번째 행 포인터 역할을 하는 것이 topRecordTable 변수이다.
+// 즉 5개가 다 차면 ++가 되어야 한다.
+// 포인터의 위치는 Bag의 topBag 변수가 각 행의 열 증가.
+// keypoint는 topRecordTable과 topBag 를 사용하여 행렬을 이용하는 것.
+
 int RecordSet::Add(Employee* p) {
-	if () {
-		Set::Add(p);
+	if (topRecordSet < setMaxSize) {
+		if (Set::Add(p) != -1) {
+			topRecordSet++;
+			if (topRecordSet == setMaxSize) {
+				cout << "가득 찼습니다." << endl;
+				return 1; // 행이 증가함을 알리기 위해 1을 반환
+			}
+			return 0;
+		}
 	}
+
+	if (topRecordSet + 1 < setMaxSize) {
+		topRecordSet++;
+		Set::Add(p);
+		return 0;
+	}
+
+	return -1; // 모든 열이 가득 찬 경우
 }
 
+Employee* RecordSet::Search(char* name) {
+	return Set::Search(name);
+}
+
+void RecordSet::Print() {
+	Set::Print();
+	if (topRecordSet > 0 && topRecordSet % 5 != 0) {
+		cout << " | ";
+	}
+}
 
 class RecordTable {
 	int tableMaxSize;
@@ -146,13 +318,63 @@ public:
 };
 
 // ----------------------- 교수님 코드 -------------------------------
+//int RecordTable::Add(Employee* e) {
+//	// 0 을 i로 바꾸고 i는 top을 통해 움직이게 만들기.
+//	for (int i = 0; i < tableMaxSize; i++) {
+//		if (data[i]->IsFull()) {
+//			continue;
+//		}
+//		data[i]->Add(e);
+//		return 0;
+//	}
+//	return -1;
+//}
+// ----------------------- 교수님 코드 -------------------------------
+
 int RecordTable::Add(Employee* e) {
-	// 0 을 i로 바꾸고 i는 top을 통해 움직이게 만들기.
-	for () {
-		data[i]->Add(e);
+	int result = data[topRecordTable]->Add(e); // RecordSet의 Add() 메소드 호출 결과 저장
+	if (result == 1) { // 행이 증가했을 경우
+		topRecordTable++; // topRecordTable 변수를 증가시킴
+		if (topRecordTable == tableMaxSize) {
+			cout << "테이블이 가득 찼습니다." << endl;
+			return 1; // 테이블이 가득 찼음을 알리기 위해 1을 반환
+		}
+	}
+	return 0;
+}
+
+void RecordTable::Print() {
+	for (int i = 0; i < topRecordTable; i++) {
+		data[i]->Print();
+		if (i < topRecordTable) {
+			cout << " | " << endl;
+		}
 	}
 }
-// ----------------------- 교수님 코드 -------------------------------
+
+
+int RecordTable::Delete(char* str) {
+	int deletedCount = 0;
+
+	for (int i = 0; i < tableMaxSize; i++) {
+		if (data[i]->Delete(str)) {
+			deletedCount++;
+			return deletedCount;
+		}
+	}
+	return -1;
+}
+
+Employee* RecordTable::Search(char* str) {
+	for (int i = 0; i < tableMaxSize; i++) {
+		Employee* result = data[i]->Search(str);
+		if (result != nullptr) {
+			return result; // 레코드를 성공적으로 찾은 경우
+		}
+	}
+	return nullptr; // 찾을 레코드가 없는 경우
+}
+
 
 int main() {
 	Employee* members[30];//Employee 선언으로 변경하는 문제 해결 필요 
@@ -213,16 +435,17 @@ int main() {
 		case 3:
 			// table에서 객체 찾기
 
-			p = table.Search("kim");
+			p = table.Search("kim"); // 문자열이 계속 전달되서 person객체와 비교
 			if (p == nullptr) cout << "kim이 존재하지 않는다" << endl;
 			else
 				p->Print();
 			break;
 		case 4:
 			//table에서 객체 삭제하기
-			result = table.Delete("hong");
-			if (result > 0)
-				cout << "삭제된 records 숫자" << result << endl;
+			result = table.Delete("hong"); // 이름을 삭제하는 것이 아니라 특수문자로 바꾸어야 함.
+			if (result > 0) {
+				cout << "삭제된 records 숫자 " << result << endl;
+			}
 
 			break;
 
