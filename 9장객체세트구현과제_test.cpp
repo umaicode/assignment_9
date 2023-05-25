@@ -159,20 +159,30 @@ int Bag::Add(Employee* p) {
 	return -1;
 }
 
-int Bag::Delete(char* str) {
-	if (IsEmpty()) {
-		Empty();
-		return -1;
-	}
+//int Bag::Delete(char* str) {
+//	if (IsEmpty()) {
+//		Empty();
+//		return -1;
+//	}
+//
+//	for (int i = 0; i < topBag; i++) {
+//		if (strcmp(arr[i]->GetName().c_str(), str) == 0) {
+//			arr[i]->SetName("*******");
+//			return 0;
+//		}
+//	}
+//
+//	return -1;
+//}
 
+int Bag::Delete(char* str) {
 	for (int i = 0; i < topBag; i++) {
-		if (strcmp(arr[i]->GetName().c_str(), str) == 0) {
+		if (arr[i]->GetName() == str) {
 			arr[i]->SetName("*******");
-			return 0;
+			return 1;
 		}
 	}
-
-	return -1;
+	return 0;
 }
 
 
@@ -357,13 +367,13 @@ int RecordTable::Delete(char* str) {
 	int deletedCount = 0;
 
 	for (int i = 0; i < tableMaxSize; i++) {
-		if (data[i]->Delete(str)) {
+		if (data[i]->Delete(str) == 1) {
 			deletedCount++;
-			return deletedCount;
 		}
 	}
-	return -1;
+	return deletedCount;
 }
+
 
 Employee* RecordTable::Search(char* str) {
 	for (int i = 0; i < tableMaxSize; i++) {
